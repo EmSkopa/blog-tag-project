@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Rubicon.Contexts;
+using Rubicon.Services.BlogService;
 using Rubicon.Services.TagService;
 
 namespace RubiconBlogProject
@@ -34,6 +35,8 @@ namespace RubiconBlogProject
             var connectionString = Environment.GetEnvironmentVariable("RubiconDBConnection") ??
                                     Configuration.GetConnectionString("RubiconDBConnection");
             services.AddDbContext<RubiconDBContext>(opt => opt.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+
+            services.AddScoped<IBlogService, BlogService>();
 
             services.AddScoped<ITagService, TagService>();
 
