@@ -16,6 +16,7 @@ namespace Rubicon.Profiles
             CreateMap<Tag, TagDto>();
             CreateMap<Blog, BlogResponseDto>();
             CreateMap<BlogWithTags, BlogResponseDto>().IncludeMembers(b => b.Blog);
+            CreateMap<BlogUpdateDto, Blog>();
         }
     }
 }
