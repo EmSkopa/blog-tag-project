@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Rubicon.Contexts;
 
 namespace RubiconBlogProject
 {
@@ -26,6 +28,10 @@ namespace RubiconBlogProject
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            
+            var connectionString = Environment.GetEnvironmentVariable("RubiconDBConnection") ??
+                                    Configuration.GetConnectionString("RubiconDBConnection");
+            services.AddDbContext<RubiconDBContext>(opt => opt.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
