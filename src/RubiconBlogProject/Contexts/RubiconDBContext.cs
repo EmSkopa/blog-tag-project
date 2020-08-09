@@ -3,12 +3,16 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Rubicon.Models;
 
 namespace Rubicon.Contexts
 {
     public class RubiconDBContext : DbContext
     {
         public RubiconDBContext(DbContextOptions<RubiconDBContext> options) : base(options) {}
+
+        public DbSet<Blog> Blogs { get; set; }
+        public DbSet<Tag> Tags { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
