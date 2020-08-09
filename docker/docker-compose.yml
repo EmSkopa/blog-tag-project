@@ -1,0 +1,33 @@
+version: '3'
+networks:
+    rubiconapi:
+        driver: bridge 
+       
+services:
+    postgres:
+        container_name: postgres
+        image: postgres:latest
+        env_file: 
+            - ./postgres/postgres.env
+        ports:
+            - 5433:5432
+        restart: always
+        volumes:
+            - db_volume:/var/lib/postgresql/data
+        networks:
+            - rubiconapi
+    
+    rubicon:
+        container_name: rubicon
+        build: ./rubicon-test
+        env_file:
+            - ./rubicon-env/rubicon.env
+        ports:
+            - 3000:80
+        depends_on:
+            - "postgres"
+        networks:
+            - rubiconapi
+
+volumes:
+    db_volume:
