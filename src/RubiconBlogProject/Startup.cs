@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Rubicon.Contexts;
+using Rubicon.SeedingData;
 using Rubicon.Services.BlogService;
 using Rubicon.Services.TagService;
 
@@ -61,6 +62,8 @@ namespace RubiconBlogProject
             {
                 endpoints.MapControllers();
             });
+
+            SeedingData.SeedInitiallyDataInDb(app);
         }
     }
 }
