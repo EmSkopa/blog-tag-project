@@ -6,9 +6,9 @@ Project is structured into three parts:
 * src
 * test
 
-## Docker
+## docker
 
-Created simple docker compose env, so we can run it our application in docker container
+Created simple docker compose env, so we can run it our application in docker container.
 For starting application:
 * cd docker && ./start_api.sh && cd ..
 
@@ -26,7 +26,7 @@ Here is our application with all models, services and controllers inside it. The
         * none
 * BlogController
     * Get all blogs based on tag query => Input parameters:
-        * [FromQuery] query => string (If query is not defined, it will return all blogs)
+        * [FromQuery] tag => string (If tag is not defined, it will return all blogs)
     * Get blog by slug => Input parameters:
         * slug => string
     * Create new blog => Input parameters:
