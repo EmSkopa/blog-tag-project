@@ -163,7 +163,7 @@ namespace Rubicon.Services.BlogService
                 List<BlogResponseDto> blogsDto = new List<BlogResponseDto>();
                 foreach(var blog in blogs)
                 {
-                    if (tagQuery == "")
+                    if (String.IsNullOrEmpty(tagQuery))
                     {
                         blogsDto.Add(_mapper.Map<BlogResponseDto>(blog));
                     }
@@ -207,9 +207,9 @@ namespace Rubicon.Services.BlogService
                     );
                 }
 
-                if (blogUpdateDto.Body == null &&
-                    blogUpdateDto.Description == null &&
-                    blogUpdateDto.Title == null)
+                if (String.IsNullOrEmpty(blogUpdateDto.Body) &&
+                    String.IsNullOrEmpty(blogUpdateDto.Description) &&
+                    String.IsNullOrEmpty(blogUpdateDto.Title))
                 {
                     _logger.LogWarning("Didn't specify what you want to update");
                     return new ServiceResponse<BlogResponseDto>(
