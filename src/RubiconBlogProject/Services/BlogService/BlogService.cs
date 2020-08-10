@@ -163,7 +163,7 @@ namespace Rubicon.Services.BlogService
                 List<BlogResponseDto> blogsDto = new List<BlogResponseDto>();
                 foreach(var blog in blogs)
                 {
-                    if (tagQuery == null)
+                    if (tagQuery == "")
                     {
                         blogsDto.Add(_mapper.Map<BlogResponseDto>(blog));
                     }
@@ -204,6 +204,17 @@ namespace Rubicon.Services.BlogService
                     return new ServiceResponse<BlogResponseDto>(
                         StatusCodes.Status404NotFound,
                         "There is no blog in database"
+                    );
+                }
+
+                if (blogUpdateDto.Body == null &&
+                    blogUpdateDto.Description == null &&
+                    blogUpdateDto.Title == null)
+                {
+                    _logger.LogWarning("Didn't specify what you want to update");
+                    return new ServiceResponse<BlogResponseDto>(
+                        StatusCodes.Status400BadRequest,
+                        "Didn't specify what you want to update"
                     );
                 }
 

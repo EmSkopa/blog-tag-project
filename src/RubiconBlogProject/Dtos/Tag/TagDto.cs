@@ -2,6 +2,6 @@ namespace Rubicon.Dtos.Tag
 {
     public class TagDto
     {
-        public string Tag { get; set; }
+        public string TagDescription { get; set; }
     }
 }
