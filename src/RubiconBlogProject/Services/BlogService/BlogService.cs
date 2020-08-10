@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Rubicon.Contexts;
 using Rubicon.Dtos.Blog;
+using Rubicon.Dtos.Tag;
 using Rubicon.Models;
 using Rubicon.Profiles.Helpers;
 using Slugify;
@@ -34,7 +35,10 @@ namespace Rubicon.Services.BlogService
                 SlugHelper helper = new SlugHelper();
                 var slugForBlog = helper.GenerateSlug(blogCreateComplexDto.Title);
 
-                var blogForCheckOfExistance = await _context.Blogs.FirstOrDefaultAsync(b => b.Slug == slugForBlog);
+                var blogForCheckOfExistance = await _context.Blogs
+                                            .Include(b => b.BlogTags)
+                                                .ThenInclude(bt => bt.Tag)
+                                            .FirstOrDefaultAsync(b => b.Slug == slugForBlog);
                 if (blogForCheckOfExistance != null)
                 {
                     _logger.LogWarning($"There is already blog with slug = {slugForBlog}");
@@ -45,37 +49,48 @@ namespace Rubicon.Services.BlogService
                 }
 
                 List<Tag> tags = new List<Tag>();
-                foreach (var tagDto in blogCreateComplexDto.Tags)
+                foreach (var tagDto in blogCreateComplexDto.TagList)
                 {
-                    var tag = _mapper.Map<Tag>(tagDto);
                     var tagExistanceChecking = await _context.Tags
-                                .FirstOrDefaultAsync(t => t.TagDescription == tag.TagDescription);
+                                .FirstOrDefaultAsync(t => t.TagDescription == tagDto);
                     if (tagExistanceChecking == null)
                     {
+                        var tag = new Tag { TagDescription = tagDto };
                         await _context.Tags.AddAsync(tag);
-                        await _context.SaveChangesAsync();
+
+                        tags.Add(tag);
 
                         _logger.LogInformation($"Added new tag = {tag.TagDescription}");
                     }
-                    tags.Add(tag);
+                    else
+                    {
+                        tags.Add(tagExistanceChecking);
+                    }
                 }
 
                 var blogForAddDto = _mapper.Map<BlogCreateDto>(blogCreateComplexDto);
                 var blogForAdd = _mapper.Map<Blog>(blogForAddDto);
-                blogForAdd.Tags = tags;
-
+                blogForAdd.Slug = slugForBlog;
+                
                 await _context.Blogs.AddAsync(blogForAdd);
+
+                foreach(var tag in tags)
+                {
+                    var blogTag = new BlogTag
+                    {
+                        Blog = blogForAdd,
+                        Tag = tag
+                    };
+                    await _context.BlogTags.AddAsync(blogTag);
+                }
+
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"Added new blog with title = {blogForAdd.Title}");
+                var blogWithTags = _mapper.Map<BlogResponseDto>(blogForAdd);
+                blogWithTags.TagList = blogCreateComplexDto.TagList;
 
-                BlogWithTags blogWithTags = new BlogWithTags()
-                {
-                    Blog = blogForAdd,
-                    Tags = blogForAdd.Tags
-                };
-
-                return new ServiceResponse<BlogResponseDto>(_mapper.Map<BlogResponseDto>(blogWithTags));
+                return new ServiceResponse<BlogResponseDto>(blogWithTags);
             }
             catch (Exception ex)
             {
@@ -121,7 +136,10 @@ namespace Rubicon.Services.BlogService
         {
             try
             {
-                var blogForReturn = await _context.Blogs.FirstOrDefaultAsync(b => b.Slug == slug);
+                var blogForReturn = await _context.Blogs
+                                        .Include(b => b.BlogTags)
+                                            .ThenInclude(bt => bt.Tag)
+                                        .FirstOrDefaultAsync(b => b.Slug == slug);
                 if (blogForReturn == null)
                 {
                     _logger.LogWarning($"There is no blog with slug = {slug}");
@@ -132,7 +150,14 @@ namespace Rubicon.Services.BlogService
                 }
 
                 _logger.LogInformation($"Successfully get blog with slug = {blogForReturn.Slug}");
-                return new ServiceResponse<BlogResponseDto>(_mapper.Map<BlogResponseDto>(blogForReturn));
+                var blogForReturnDto = _mapper.Map<BlogResponseDto>(blogForReturn);
+                List<string> tags = new List<string>();
+                foreach(var blogTags in blogForReturn.BlogTags)
+                {
+                    tags.Add(blogTags.Tag.TagDescription);
+                }
+                blogForReturnDto.TagList = tags;
+                return new ServiceResponse<BlogResponseDto>(blogForReturnDto);
             }
             catch (Exception ex)
             {
@@ -149,6 +174,8 @@ namespace Rubicon.Services.BlogService
             try
             {
                 var blogs = await _context.Blogs
+                                    .Include(b => b.BlogTags)
+                                        .ThenInclude(bt => bt.Tag)
                                     .OrderByDescending(b => b.CreatedAt)
                                     .ToListAsync();
                 if (!blogs.Any())
@@ -165,16 +192,27 @@ namespace Rubicon.Services.BlogService
                 {
                     if (String.IsNullOrEmpty(tagQuery))
                     {
-                        blogsDto.Add(_mapper.Map<BlogResponseDto>(blog));
+                        var blogDto = _mapper.Map<BlogResponseDto>(blog);
+                        List<string> tags = new List<string>();
+                        foreach (var blogTag in blog.BlogTags)
+                        {
+                            tags.Add(blogTag.Tag.TagDescription);
+                        }
+
+                        blogDto.TagList = tags;
+
+                        blogsDto.Add(blogDto);
                     }
                     else
                     {
-                        var blogTags = blog.Tags;
+                        var blogTags = blog.BlogTags;
                         foreach(var blogTag in blogTags)
                         {
-                            if (blogTag.TagDescription == tagQuery)
+                            if (blogTag.Tag.TagDescription == tagQuery)
                             {
-                                blogsDto.Add(_mapper.Map<BlogResponseDto>(blog));
+                                var blogDto = _mapper.Map<BlogResponseDto>(blog);
+                                blogDto.TagList = new List<string>() { blogTag.Tag.TagDescription };
+                                blogsDto.Add(blogDto);
                             }
                         }
                     }
@@ -197,7 +235,10 @@ namespace Rubicon.Services.BlogService
         {
             try
             {
-                var blogForUpdate = await _context.Blogs.FirstOrDefaultAsync(b => b.Slug == slug);
+                var blogForUpdate = await _context.Blogs
+                                    .Include(b => b.BlogTags)
+                                        .ThenInclude(bt => bt.Tag)
+                                    .FirstOrDefaultAsync(b => b.Slug == slug);
                 if (blogForUpdate == null)
                 {
                     _logger.LogWarning("There is no blog in database");
@@ -217,9 +258,25 @@ namespace Rubicon.Services.BlogService
                         "Didn't specify what you want to update"
                     );
                 }
+                
+                if (String.IsNullOrEmpty(blogUpdateDto.Body))
+                {
+                    blogUpdateDto.Body = blogForUpdate.Body;
+                }
+                if (String.IsNullOrEmpty(blogUpdateDto.Description))
+                {
+                    blogUpdateDto.Description = blogForUpdate.Description;
+                }
 
+                var updateTitle = true;
+                if (String.IsNullOrEmpty(blogUpdateDto.Title))
+                {
+                    blogUpdateDto.Title = blogForUpdate.Title;
+                    updateTitle = false;
+                }
+                
                 _mapper.Map(blogUpdateDto, blogForUpdate);
-                if (blogUpdateDto.Title != null)
+                if (updateTitle)
                 {
                     SlugHelper helper = new SlugHelper();
                     blogForUpdate.Slug = helper.GenerateSlug(blogUpdateDto.Title);
@@ -227,8 +284,17 @@ namespace Rubicon.Services.BlogService
 
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Successfully updated blog with slug = {blogForUpdate.Slug}");
-
-                return new ServiceResponse<BlogResponseDto>(_mapper.Map<BlogResponseDto>(blogForUpdate));
+                
+                var blogForReturnDto = _mapper.Map<BlogResponseDto>(blogForUpdate);
+                
+                List<string> tags = new List<string>();
+                foreach(var blogTags in blogForUpdate.BlogTags)
+                {
+                    tags.Add(blogTags.Tag.TagDescription);
+                }
+                blogForReturnDto.TagList = tags;
+                
+                return new ServiceResponse<BlogResponseDto>(blogForReturnDto);
             }
             catch (Exception ex)
             {

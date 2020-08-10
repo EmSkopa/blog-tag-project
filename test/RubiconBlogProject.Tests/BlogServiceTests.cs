@@ -63,7 +63,7 @@ namespace RubiconBlogProject.Tests
             List<BlogResponseDto> blogsCheck = (List<BlogResponseDto>)serviceResponse.Data;
             
             // assert
-            var blogsDb = await _context.Blogs.ToListAsync();
+            var blogsDb = await _context.Blogs.Include(b => b.BlogTags).ToListAsync();
 
             Assert.True(serviceResponse.Success);
             Assert.NotNull(serviceResponse.Data);
@@ -71,15 +71,12 @@ namespace RubiconBlogProject.Tests
             Assert.Equal(blogsDb[2].Body, blogsCheck[0].Body);
             Assert.Equal(blogsDb[2].Description, blogsCheck[0].Description);
             Assert.Equal(blogsDb[2].Title, blogsCheck[0].Title);
-            Assert.Equal(blogsDb[2].Tags.Count, blogsCheck[0].Tags.Count);
             Assert.Equal(blogsDb[1].Body, blogsCheck[1].Body);
             Assert.Equal(blogsDb[1].Description, blogsCheck[1].Description);
             Assert.Equal(blogsDb[1].Title, blogsCheck[1].Title);
-            Assert.Equal(blogsDb[1].Tags.Count, blogsCheck[1].Tags.Count);
             Assert.Equal(blogsDb[0].Body, blogsCheck[2].Body);
             Assert.Equal(blogsDb[0].Description, blogsCheck[2].Description);
             Assert.Equal(blogsDb[0].Title, blogsCheck[2].Title);
-            Assert.Equal(blogsDb[0].Tags.Count, blogsCheck[2].Tags.Count);
         }
 
         [Fact]
@@ -116,7 +113,6 @@ namespace RubiconBlogProject.Tests
             Assert.Equal(blogDb.Body, blog.Body);
             Assert.Equal(blogDb.Description, blog.Description);
             Assert.Equal(blogDb.Title, blog.Title);
-            Assert.Equal(blogDb.Tags.Count, blog.Tags.Count);
         }
 
         [Fact]
@@ -148,10 +144,10 @@ namespace RubiconBlogProject.Tests
             // arrange
             await ClearDB();
 
-            var tags = new List<TagDto>()
+            var tags = new List<string>()
             {
-                new TagDto { TagDescription = "IOS" },
-                new TagDto { TagDescription = "Android" }
+                "IOS" ,
+                "Android"
             };
 
             var blogCreate = new BlogCreateComplexDto()
@@ -159,18 +155,18 @@ namespace RubiconBlogProject.Tests
                 Title = "title 1",
                 Description = "description 1",
                 Body = "body 1",
-                Tags = tags
+                TagList = tags
             };
             
             // act
             var serviceResponse = await _sut.Object.AddNewBlog(blogCreate);
 
-            var tagsDb = await _context.Tags.ToListAsync();
+            var tagsDb = await _context.Tags.Include(t => t.BlogTags).ToListAsync();
             
             // assert
             Assert.True(serviceResponse.Success);
             Assert.NotNull(serviceResponse.Data);
-            Assert.Equal(tags.Count, serviceResponse.Data.Tags.Count);
+            Assert.Equal(tags.Count, serviceResponse.Data.TagList.Count);
             Assert.Equal(tags.Count, tagsDb.Count);
             Assert.Equal(blogCreate.Title, serviceResponse.Data.Title);
             Assert.Equal(blogCreate.Description, serviceResponse.Data.Description);
@@ -289,13 +285,21 @@ namespace RubiconBlogProject.Tests
 
             List<Blog> blogs = new List<Blog>()
             {
-                new Blog { Title = "title 1", Slug = "title-1", Body = "body 1", Description = "description 1", Tags = tags },
-                new Blog { Title = "title 2", Slug = "title-2", Body = "body 2", Description = "description 2", Tags = tags },
-                new Blog { Title = "title 3", Slug = "title-3", Body = "body 3", Description = "description 3", Tags = tags }
+                new Blog { Title = "title 1", Slug = "title-1", Body = "body 1", Description = "description 1" },
+                new Blog { Title = "title 2", Slug = "title-2", Body = "body 2", Description = "description 2" },
+                new Blog { Title = "title 3", Slug = "title-3", Body = "body 3", Description = "description 3" }
             };
+
 
             await _context.Tags.AddRangeAsync(tags);
             await _context.Blogs.AddRangeAsync(blogs);
+            
+            for(int i = 0; i < tags.Count; ++i)
+            {
+                var blogTag = new BlogTag { Blog = blogs[i], Tag = tags[i] };
+                await _context.BlogTags.AddAsync(blogTag);
+            }
+            
             await _context.SaveChangesAsync();
         }
         private async Task ClearDB()

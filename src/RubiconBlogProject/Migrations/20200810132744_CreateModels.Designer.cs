@@ -10,15 +10,15 @@ using Rubicon.Contexts;
 namespace Rubicon.Migrations
 {
     [DbContext(typeof(RubiconDBContext))]
-    [Migration("20200810014837_CreatedAllModels")]
-    partial class CreatedAllModels
+    [Migration("20200810132744_CreateModels")]
+    partial class CreateModels
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                .HasAnnotation("ProductVersion", "3.1.6")
+                .HasAnnotation("ProductVersion", "3.1.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("Rubicon.Models.Blog", b =>
@@ -58,15 +58,38 @@ namespace Rubicon.Migrations
                     b.ToTable("blogs");
                 });
 
+            modelBuilder.Entity("Rubicon.Models.BlogTag", b =>
+                {
+                    b.Property<Guid>("BlogId")
+                        .HasColumnName("blog_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnName("tag_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnName("created_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnName("updated_at")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("BlogId", "TagId")
+                        .HasName("pk_blog_tags");
+
+                    b.HasIndex("TagId")
+                        .HasName("ix_blog_tags_tag_id");
+
+                    b.ToTable("blog_tags");
+                });
+
             modelBuilder.Entity("Rubicon.Models.Tag", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnName("id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BlogId")
-                        .HasColumnName("blog_id")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -84,18 +107,22 @@ namespace Rubicon.Migrations
                     b.HasKey("Id")
                         .HasName("pk_tags");
 
-                    b.HasIndex("BlogId")
-                        .HasName("ix_tags_blog_id");
-
                     b.ToTable("tags");
                 });
 
-            modelBuilder.Entity("Rubicon.Models.Tag", b =>
+            modelBuilder.Entity("Rubicon.Models.BlogTag", b =>
                 {
                     b.HasOne("Rubicon.Models.Blog", "Blog")
-                        .WithMany("Tags")
+                        .WithMany("BlogTags")
                         .HasForeignKey("BlogId")
-                        .HasConstraintName("fk_tags_blogs_blog_id")
+                        .HasConstraintName("fk_blog_tags_blogs_blog_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Rubicon.Models.Tag", "Tag")
+                        .WithMany("BlogTags")
+                        .HasForeignKey("TagId")
+                        .HasConstraintName("fk_blog_tags_tags_tag_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

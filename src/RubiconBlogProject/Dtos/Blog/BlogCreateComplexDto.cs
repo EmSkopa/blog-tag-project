@@ -13,6 +13,6 @@ namespace Rubicon.Dtos.Blog
         [Required]
         public string Body { get; set; }
         [Required]
-        public ICollection<TagDto> Tags { get; set; }
+        public ICollection<string> TagList { get; set; }
     }
 }

@@ -58,7 +58,7 @@ namespace RubiconBlogProject.Tests
             
             // act
             var serviceResponse = await _sut.Object.GetTags();
-            List<TagDto> tagsCheck = (List<TagDto>)serviceResponse.Data;
+            List<string> tagsCheck = (List<string>)serviceResponse.Data;
             
             // assert
             var tagsDb = await _context.Tags.ToListAsync();
@@ -66,9 +66,9 @@ namespace RubiconBlogProject.Tests
             Assert.True(serviceResponse.Success);
             Assert.NotNull(serviceResponse.Data);
             Assert.Equal(tagsDb.Count, serviceResponse.Data.Count);
-            Assert.Equal(tagsDb[0].TagDescription, tagsCheck[0].TagDescription);
-            Assert.Equal(tagsDb[1].TagDescription, tagsCheck[1].TagDescription);
-            Assert.Equal(tagsDb[2].TagDescription, tagsCheck[2].TagDescription);
+            Assert.Equal(tagsDb[0].TagDescription, tagsCheck[0]);
+            Assert.Equal(tagsDb[1].TagDescription, tagsCheck[1]);
+            Assert.Equal(tagsDb[2].TagDescription, tagsCheck[2]);
         }
 
         private async Task AddTagsInDb()

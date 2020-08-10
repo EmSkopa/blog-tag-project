@@ -14,4 +14,4 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 WORKDIR /app
 EXPOSE 80
 COPY --from=build-env /app/out .
-ENTRYPOINT ["dotnet", "RubiconTestProject.dll"]
+ENTRYPOINT ["dotnet", "RubiconBlogProject.dll"]

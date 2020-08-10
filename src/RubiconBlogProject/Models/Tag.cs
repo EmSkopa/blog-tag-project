@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Rubicon.Models
 {
@@ -10,7 +11,6 @@ namespace Rubicon.Models
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        public Guid BlogId { get; set; }
-        public Blog Blog { get; set; }
+        public ICollection<BlogTag> BlogTags { get; set; }
     }
 }

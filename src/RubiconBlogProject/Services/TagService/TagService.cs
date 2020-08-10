@@ -24,7 +24,7 @@ namespace Rubicon.Services.TagService
             _logger = logger;
         }
 
-        public async Task<ServiceResponse<ICollection<TagDto>>> GetTags()
+        public async Task<ServiceResponse<ICollection<string>>> GetTags()
         {
             try
             {
@@ -32,24 +32,24 @@ namespace Rubicon.Services.TagService
                 if (!tags.Any())
                 {
                     _logger.LogWarning("There is no tags in database");
-                    return new ServiceResponse<ICollection<TagDto>>(
+                    return new ServiceResponse<ICollection<string>>(
                         StatusCodes.Status404NotFound, 
                         "There is no tags in database"
                     );
                 }
 
-                List<TagDto> tagsDto = new List<TagDto>();
+                List<string> tagsDto = new List<string>();
                 foreach(var tag in tags)
                 {
-                    tagsDto.Add(_mapper.Map<TagDto>(tag));
+                    tagsDto.Add(tag.TagDescription);
                 }
 
-                return new ServiceResponse<ICollection<TagDto>>(tagsDto);
+                return new ServiceResponse<ICollection<string>>(tagsDto);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Internal Server error occurred while getting all tags from database");
-                return new ServiceResponse<ICollection<TagDto>>(
+                return new ServiceResponse<ICollection<string>>(
                     StatusCodes.Status500InternalServerError,
                     "Internal Server error occurred while getting all tags from database"
                 );

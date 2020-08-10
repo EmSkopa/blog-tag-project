@@ -18,9 +18,9 @@ namespace Rubicon.Controllers
         }
         
         [HttpGet]
-        public async Task<ActionResult<ICollection<BlogResponseDto>>> GetAllBlogs([FromQuery]string query)
+        public async Task<ActionResult<ICollection<BlogResponseDto>>> GetAllBlogs([FromQuery]string tag)
         {
-            var serviceResponse = await _blogService.GetBlogs(query);
+            var serviceResponse = await _blogService.GetBlogs(tag);
             
             if (!serviceResponse.Success)
             {

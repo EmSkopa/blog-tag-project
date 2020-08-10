@@ -6,6 +6,6 @@ namespace Rubicon.Services.TagService
 {
     public interface ITagService
     {
-        Task<ServiceResponse<ICollection<TagDto>>> GetTags();
+        Task<ServiceResponse<ICollection<string>>> GetTags();
     }
 }

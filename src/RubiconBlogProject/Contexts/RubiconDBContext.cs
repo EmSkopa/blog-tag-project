@@ -13,11 +13,14 @@ namespace Rubicon.Contexts
 
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<BlogTag> BlogTags { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<BlogTag>()
+                .HasKey(bt => new { bt.BlogId, bt.TagId });
         }
 
         // Automatic insertion of CreatedAt and UpdatedAt values

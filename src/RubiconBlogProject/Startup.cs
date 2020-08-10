@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -12,12 +13,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 using Rubicon.Contexts;
-using Rubicon.SeedingData;
+using Rubicon.SeedingDatas;
 using Rubicon.Services.BlogService;
 using Rubicon.Services.TagService;
 
-namespace RubiconBlogProject
+namespace Rubicon
 {
     public class Startup
     {
@@ -31,7 +34,15 @@ namespace RubiconBlogProject
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.Converters.Add(new IsoDateTimeConverter()
+                    {
+                        DateTimeFormat = "yyyy-MM-ddTHH:mm:ssZ",
+                        DateTimeStyles = DateTimeStyles.AdjustToUniversal 
+                    });
+                options.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
+            });
             
             var connectionString = Environment.GetEnvironmentVariable("RubiconDBConnection") ??
                                     Configuration.GetConnectionString("RubiconDBConnection");
@@ -42,6 +53,8 @@ namespace RubiconBlogProject
             services.AddScoped<ITagService, TagService>();
 
             services.AddAutoMapper(typeof(Startup));
+            
+            services.AddHttpContextAccessor();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,8 +75,11 @@ namespace RubiconBlogProject
             {
                 endpoints.MapControllers();
             });
-
-            SeedingData.SeedInitiallyDataInDb(app);
+            
+            if(env.IsEnvironment("Docker")) 
+            {
+                SeedingData.SeedInitiallyDataInDb(app);
+            }
         }
     }
 }
