@@ -57,7 +57,6 @@ Get blog post by slug:
 
 Adding new blog post:
 * POST http://localhost:3000/api/posts
-    * 
     ```yaml
     {
         "Title": "title 4",
@@ -73,7 +72,6 @@ Adding new blog post:
 
 Updating new blog post:
 * PUT http://localhost:3000/api/posts/title-4
-    * 
     ```yaml
     {
         "Title": "title 4",
